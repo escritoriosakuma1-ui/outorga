@@ -379,13 +379,13 @@ function buildFichaIrrigacao(local, produtor, mesIndex){
   thead.appendChild(hr); table.appendChild(thead);
 
   const totalDias = diasNoMes(state.irr.ano, mesIndex);
-  const linhas = state.irr.numerarDias ? totalDias : state.irr.linhas;
+  const linhas = state.irr.linhas;
   const tbody = el("tbody");
   for(let i = 0; i < linhas; i++){
     const tr = el("tr");
     COLS_IRRIGACAO.forEach((_, j) => {
       const td = el("td");
-      if(j === 0 && state.irr.numerarDias){
+      if(false){
         td.className = "dia";
         td.textContent = String(i+1).padStart(2,"0") + "/" + String(mesIndex+1).padStart(2,"0");
       }
