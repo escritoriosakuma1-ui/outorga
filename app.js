@@ -5,8 +5,8 @@
 
 // ---------- CONFIGURAÇÃO DO BANCO ----------
 const DB = {
-  url: "__SUPABASE_URL__",
-  key: "__SUPABASE_ANON_KEY__"
+  url: "https://ysvmfmnwbcxgsrjewwsy.supabase.co",
+  key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzdm1mbW53YmN4Z3NyamV3d3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3Njg5ODEsImV4cCI6MjEwMzM0NDk4MX0.S0szjHhUdCgQqAJ4b-D9nrXg2pk-5KoYPwGOESRYWuQ"
 };
 
 const MESES = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
