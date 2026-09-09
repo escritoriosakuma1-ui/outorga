@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9BD11A"/>
+      <stop offset="1" stop-color="#5E8700"/>
+    </linearGradient>
+  </defs>
+
+  <!-- gota -->
+  <path d="M256 40 C 300 128 388 234 388 318 A 132 132 0 1 1 124 318 C 124 234 212 128 256 40 Z"
+        fill="url(#g)"/>
+
+  <!-- brilho da gota -->
+  <path d="M256 96 C 232 140 196 196 186 246 C 178 288 190 316 206 318 C 224 320 226 292 232 262 C 240 220 254 152 268 118 Z"
+        fill="#FFFFFF" opacity="0.22"/>
+
+  <!-- mostrador do medidor -->
+  <circle cx="256" cy="322" r="96" fill="#FFFFFF"/>
+  <circle cx="256" cy="322" r="96" fill="none" stroke="#5E8700" stroke-width="10"/>
+
+  <!-- marcacoes -->
+  <g stroke="#51534A" stroke-width="9" stroke-linecap="round">
+    <line x1="256" y1="248" x2="256" y2="266"/>
+    <line x1="330" y1="322" x2="312" y2="322"/>
+    <line x1="256" y1="396" x2="256" y2="378"/>
+    <line x1="182" y1="322" x2="200" y2="322"/>
+  </g>
+  <g stroke="#51534A" stroke-width="6" stroke-linecap="round" opacity="0.55">
+    <line x1="308" y1="270" x2="297" y2="281"/>
+    <line x1="308" y1="374" x2="297" y2="363"/>
+    <line x1="204" y1="374" x2="215" y2="363"/>
+    <line x1="204" y1="270" x2="215" y2="281"/>
+  </g>
+
+  <!-- ponteiro -->
+  <line x1="256" y1="322" x2="311" y2="278" stroke="#744F28" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="322" r="17" fill="#744F28"/>
+  <circle cx="256" cy="322" r="6" fill="#FFFFFF"/>
+</svg>

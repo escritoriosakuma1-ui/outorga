@@ -289,7 +289,6 @@ function buildFichaOutorga(controle, local, mesIndex, dias){
 
   const foot = el("div","ficha-foot");
   foot.appendChild(el("div","","Responsável"));
-  foot.appendChild(el("div","","Visto"));
   ficha.appendChild(foot);
 
   page.appendChild(ficha);
@@ -398,7 +397,6 @@ function buildFichaIrrigacao(local, produtor, mesIndex){
 
   const foot = el("div","ficha-foot");
   foot.appendChild(el("div","","Responsável"));
-  foot.appendChild(el("div","","Visto"));
   ficha.appendChild(foot);
 
   page.appendChild(ficha);
