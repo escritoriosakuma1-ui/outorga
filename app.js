@@ -11,13 +11,31 @@ const DB = {
 
 const MESES = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
 
+// Tipo de controle: define as colunas e o título padrão da ficha
 const MODELOS = {
-  horimetro4:  { nome: "Horímetro (4 colunas)",   cols: ["DATA","HORA INICIAL","HORA FINAL","RESPONSÁVEL"] },
-  horimetro5:  { nome: "Horímetro (5 colunas)",   cols: ["DATA","HORA INICIAL","HORA FINAL","OBSERVAÇÃO","RESPONSÁVEL"] },
-  hidrometro4: { nome: "Hidrômetro (4 colunas)",  cols: ["DATA","M³ INICIAL","M³ FINAL","RESPONSÁVEL"] },
-  leituraEquip:{ nome: "Leitura de equipamento",  cols: ["DATA","HORA","HORÍMETRO","MEDIDOR DE VAZÃO","RESPONSÁVEL"] },
-  custom:      { nome: "Personalizado",           cols: [] }
+  horimetro4:  { nome: "Horímetro — horas (4 colunas)",  titulo: "CONTROLE HORÍMETRO BOMBA D'ÁGUA",
+                 cols: ["DATA","HORA INICIAL","HORA FINAL","RESPONSÁVEL"] },
+  horimetro5:  { nome: "Horímetro — horas com observação", titulo: "CONTROLE HORÍMETRO BOMBA D'ÁGUA",
+                 cols: ["DATA","HORA INICIAL","HORA FINAL","OBSERVAÇÃO","RESPONSÁVEL"] },
+  hidrometro4: { nome: "Hidrômetro — m³ (4 colunas)",    titulo: "CONTROLE HIDRÔMETRO",
+                 cols: ["DATA","M³ INICIAL","M³ FINAL","RESPONSÁVEL"] },
+  hidrometro5: { nome: "Hidrômetro — m³ com observação", titulo: "CONTROLE HIDRÔMETRO",
+                 cols: ["DATA","M³ INICIAL","M³ FINAL","OBSERVAÇÃO","RESPONSÁVEL"] },
+  leituraEquip:{ nome: "Leitura de equipamento",         titulo: "LEITURA EQUIPAMENTO",
+                 cols: ["DATA","HORA","HORÍMETRO","MEDIDOR DE VAZÃO","RESPONSÁVEL"] },
+  custom:      { nome: "Personalizado",                  titulo: "CONTROLE",
+                 cols: [] }
 };
+
+// Larguras: DATA sempre larga (escrita à mão); colunas de hora/m³ estreitas
+function largurasColunas(colunas){
+  const estreita = (c) => /^(HORA|M³|HOR[ÍI]METRO)/i.test(c);
+  const pesos = colunas.map((c,i) => i === 0 ? 22 : (estreita(c) ? 21 : 0));
+  const fixo = pesos.reduce((a,b) => a + b, 0);
+  const livres = pesos.filter(p => p === 0).length;
+  const sobra = livres ? (100 - fixo) / livres : 0;
+  return pesos.map(p => (p === 0 ? sobra : p));
+}
 
 const COLS_IRRIGACAO = ["DATA","HORA LIGOU","HORA DESLIGOU","CULTURA","PIVÔ","PLANTIO"];
 
@@ -204,7 +222,11 @@ function renderFarmTabs(){
     b.onclick = () => { state.localId = l.id; state.controleId = null; garantirSelecao(); renderOutorga(); };
     wrap.appendChild(b);
   });
-  if(!state.locais.length) wrap.appendChild(el("p","hint","Nenhum local cadastrado. Use “Gerenciar locais”."));
+  const bNovo = el("button","add-tab","+ Novo local");
+  bNovo.title = "Cadastrar um novo local";
+  bNovo.onclick = () => { renderManager(); $("managerDlg").showModal(); abrirLocalDlg(null); };
+  wrap.appendChild(bNovo);
+  if(!state.locais.length) wrap.appendChild(el("p","hint","Nenhum local cadastrado. Use “+ Novo local”."));
 }
 
 function renderControlTabs(){
@@ -216,6 +238,10 @@ function renderControlTabs(){
     b.onclick = () => { state.controleId = c.id; renderOutorga(); };
     wrap.appendChild(b);
   });
+  const bNovo = el("button","add-tab","+ Novo ponto de controle");
+  bNovo.title = "Cadastrar um ponto de controle neste local";
+  bNovo.onclick = () => { renderManager(); $("managerDlg").showModal(); abrirCtrlDlg(local, null); };
+  wrap.appendChild(bNovo);
   if(!local.controles.length) wrap.appendChild(el("p","hint","Este local ainda não tem pontos de controle."));
 }
 
@@ -229,20 +255,25 @@ function renderMesChips(container, selecionados, onToggle){
   });
 }
 
-function buildFichaOutorga(controle, local, mesIndex, dias, ladoLabel){
+function buildFichaOutorga(controle, local, mesIndex, dias){
   const page = el("div","print-page");
-  page.appendChild(el("p","ficha-block-title", `${local.nome} · ${controle.nav_label} · ${MESES[mesIndex]}/${state.ano} · ${ladoLabel}`));
+  page.appendChild(el("p","ficha-block-title", `${local.nome} · ${controle.nav_label} · ${MESES[mesIndex]}/${state.ano}`));
   const ficha = el("div","ficha");
   ficha.appendChild(el("p","ficha-title", controle.titulo));
   ficha.appendChild(el("p","ficha-farm", controle.header));
 
   const meta = el("div","ficha-meta");
   const left = el("span"); left.innerHTML = "<strong>Período:</strong> " + MESES[mesIndex] + " / " + state.ano;
-  const right = el("span"); right.innerHTML = "<strong>" + ladoLabel + "</strong>";
+  const right = el("span"); right.innerHTML = "<strong>Local:</strong> " + local.nome;
   meta.append(left, right);
   ficha.appendChild(meta);
 
   const table = el("table","ficha-table");
+  const cg = el("colgroup");
+  largurasColunas(controle.colunas).forEach(w => {
+    const col = el("col"); col.style.width = w.toFixed(2) + "%"; cg.appendChild(col);
+  });
+  table.appendChild(cg);
   const thead = el("thead"); const hr = el("tr");
   controle.colunas.forEach(c => hr.appendChild(el("th", null, c)));
   thead.appendChild(hr); table.appendChild(thead);
@@ -288,15 +319,12 @@ function renderOutorga(){
     return;
   }
 
-  let paginas = 0;
+  // Uma única via por mês: o mês inteiro cabe em uma página
   state.meses.forEach(mes => {
     const total = diasNoMes(state.ano, mes);
-    const frente = Math.ceil(total / 2);
-    container.appendChild(buildFichaOutorga(controle, local, mes, Array.from({length: frente}), "Frente"));
-    container.appendChild(buildFichaOutorga(controle, local, mes, Array.from({length: total - frente}), "Verso"));
-    paginas += 2;
+    container.appendChild(buildFichaOutorga(controle, local, mes, Array.from({length: total})));
   });
-  resumo.textContent = `${paginas} página(s): ${state.meses.length} mês(es) × frente e verso — ${local.nome} / ${controle.nav_label}.`;
+  resumo.textContent = `${state.meses.length} ficha(s), uma página por mês — ${local.nome} / ${controle.nav_label}.`;
 }
 
 // ---------- RENDER: MÓDULO IRRIGAÇÃO ----------
@@ -341,6 +369,11 @@ function buildFichaIrrigacao(local, produtor, mesIndex){
   ficha.appendChild(meta);
 
   const table = el("table","ficha-table");
+  // DATA · HORA LIGOU · HORA DESLIGOU · CULTURA · PIVÔ · PLANTIO
+  const larguras = [16, 13, 13, 22, 12, 24];
+  const cg = el("colgroup");
+  larguras.forEach(w => { const col = el("col"); col.style.width = w + "%"; cg.appendChild(col); });
+  table.appendChild(cg);
   const thead = el("thead"); const hr = el("tr");
   COLS_IRRIGACAO.forEach(c => hr.appendChild(el("th",null,c)));
   thead.appendChild(hr); table.appendChild(thead);
@@ -352,7 +385,10 @@ function buildFichaIrrigacao(local, produtor, mesIndex){
     const tr = el("tr");
     COLS_IRRIGACAO.forEach((_, j) => {
       const td = el("td");
-      if(j === 0 && state.irr.numerarDias){ td.className = "dia"; td.textContent = String(i+1); }
+      if(j === 0 && state.irr.numerarDias){
+        td.className = "dia";
+        td.textContent = String(i+1).padStart(2,"0") + "/" + String(mesIndex+1).padStart(2,"0");
+      }
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -417,7 +453,8 @@ function renderManager(){
       const row = el("div","ctrl-row");
       const ci = el("div","info");
       ci.appendChild(document.createTextNode(c.nav_label));
-      ci.appendChild(el("span", null, `${c.titulo} · ${c.colunas.length} colunas`));
+      const tipo = Object.values(MODELOS).find(m => m.cols.length && m.cols.join("|") === c.colunas.join("|"));
+      ci.appendChild(el("span", null, `${c.titulo} · ${tipo ? tipo.nome : "colunas personalizadas"}`));
       const ca = el("div","row-actions");
       const e1 = el("button","btn ghost small","Editar"); e1.onclick = () => abrirCtrlDlg(l, c);
       const e2 = el("button","btn danger small","Excluir"); e2.onclick = () => excluirControle(l, c);
@@ -593,9 +630,13 @@ function ligarEventos(){
   $("ctrlCancel").onclick = () => $("ctrlDlg").close();
   $("ctrlSave").onclick = salvarControle;
   $("ctrlModelo").onchange = (e) => {
+    const modelo = MODELOS[e.target.value];
     const custom = e.target.value === "custom";
     $("ctrlCustomWrap").hidden = !custom;
-    if(!custom) $("ctrlCustom").value = MODELOS[e.target.value].cols.join("; ");
+    if(!custom){
+      $("ctrlCustom").value = modelo.cols.join("; ");
+      $("ctrlTitulo").value = modelo.titulo;   // título da ficha segue o tipo escolhido
+    }
   };
 }
 
